@@ -1,0 +1,107 @@
+What is the quantitative relationship between the parental level of education and the students' average exam score?"
+# 1. Import necessary libraries
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Set visualization style and parameters
+sns.set_style('whitegrid')
+plt.rcParams['figure.figsize'] = (12, 7)
+
+# --- 2. Data Loading ---
+# NOTE: Replace 'student_performance.csv' with your actual file path or URL.
+# Assuming columns like: gender, race/ethnicity, parental_level_of_education, 
+# lunch, test_preparation_course, math_score, reading_score, writing_score
+try:
+    df = pd.read_csv('student_performance.csv')
+    print("Student Performance data successfully loaded!")
+except FileNotFoundError:
+    print("Error: Make sure 'student_performance.csv' is in the correct directory.")
+    print("Creating a dummy DataFrame for demonstration.")
+    # Create a minimal dummy DataFrame for structural demonstration if loading fails
+    data = {
+        'gender': np.random.choice(['male', 'female'], 50),
+        'race/ethnicity': np.random.choice(['group A', 'group B', 'group C'], 50),
+        'parental_level_of_education': np.random.choice(['bachelor\'s degree', 'high school', 'master\'s degree'], 50),
+        'lunch': np.random.choice(['standard', 'free/reduced'], 50),
+        'test_preparation_course': np.random.choice(['none', 'completed'], 50),
+        'math_score': np.random.randint(40, 100, 50),
+        'reading_score': np.random.randint(50, 100, 50),
+        'writing_score': np.random.randint(45, 100, 50),
+    }
+    df = pd.DataFrame(data)
+
+# Initial Data Exploration
+print("\n--- Initial Data Info ---")
+print(df.head())
+print(df.info())
+
+
+# --- 3. Data Cleaning and Preprocessing ---
+
+# 3.1. Calculate the Average Score (Feature Engineering)
+# This creates a single metric for overall performance
+df['average_score'] = (df['math_score'] + df['reading_score'] + df['writing_score']) / 3
+
+
+# --- 4. Exploratory Data Analysis (EDA) & Insights ---
+
+# 4.1. Distribution of Average Scores (Overall Performance)
+print("\n--- 4.1 Average Score Statistics ---")
+print(df['average_score'].describe())
+
+plt.figure(figsize=(10, 6))
+sns.histplot(df['average_score'], bins=20, kde=True, color='skyblue')
+plt.title('Distribution of Student Average Scores ')
+plt.xlabel('Average Score')
+plt.ylabel('Number of Students')
+plt.show()
+
+
+# 4.2. Impact of Parental Education on Performance
+parent_group = df.groupby('parental_level_of_education')['average_score'].mean().sort_values(ascending=False)
+print("\n--- 4.2 Average Score by Parental Education Level ---")
+print(parent_group)
+
+plt.figure(figsize=(12, 6))
+sns.barplot(x=parent_group.index, y=parent_group.values, palette='viridis')
+plt.title('Average Student Score by Parental Education Level')
+plt.ylabel('Average Score')
+plt.xlabel('Parental Education Level')
+plt.xticks(rotation=45, ha='right')
+plt.tight_layout()
+plt.show()
+
+
+# 4.3. Effectiveness of Test Preparation Course
+prep_group = df.groupby('test_preparation_course')['average_score'].mean().sort_values(ascending=False)
+print("\n--- 4.3 Average Score: Completed vs. None Test Prep Course ---")
+print(prep_group)
+
+plt.figure(figsize=(8, 6))
+sns.barplot(x=prep_group.index, y=prep_group.values, palette=['mediumseagreen', 'salmon'])
+plt.title('Impact of Test Preparation Course on Average Score')
+plt.ylabel('Average Score')
+plt.xlabel('Test Preparation Course')
+plt.show()
+
+# 4.4. Gender and Score Comparison (using Box Plots)
+score_cols = ['math_score', 'reading_score', 'writing_score']
+melted_df = df.melt(id_vars='gender', value_vars=score_cols, 
+                    var_name='Exam_Subject', value_name='Score')
+
+plt.figure(figsize=(12, 6))
+sns.boxplot(x='Exam_Subject', y='Score', hue='gender', data=melted_df, palette={'male': 'dodgerblue', 'female': 'darkorange'})
+plt.title('Score Distribution by Gender Across Subjects')
+plt.show()
+
+# --- 5. Next Level Analysis: Correlation ---
+# Relationship between numeric scores
+numeric_scores = df[['math_score', 'reading_score', 'writing_score']]
+correlation_matrix = numeric_scores.corr()
+
+plt.figure(figsize=(8, 6))
+sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', fmt=".2f")
+plt.title('Correlation Between Subject Scores')
+plt.show()
